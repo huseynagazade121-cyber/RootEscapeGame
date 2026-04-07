@@ -6,20 +6,30 @@
     <title>Gravity Breach | RootEscape</title>
     <style>
         body { margin: 0; background: #000; color: #0f0; font-family: 'Courier New', monospace; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        #ui { position: absolute; top: 20px; font-size: 22px; z-index: 10; text-shadow: 0 0 10px #0f0; }
-        canvas { background: #050505; border: 2px solid #0f0; box-shadow: 0 0 20px #030; }
-        #start-screen { position: absolute; background: rgba(0,0,0,0.9); padding: 30px; border: 2px solid #0f0; text-align: center; z-index: 20; }
-        button { background: #0f0; color: #000; border: none; padding: 12px 25px; font-weight: bold; cursor: pointer; font-family: inherit; }
-        .mode-text { color: #fff; font-size: 14px; margin-top: 10px; }
+        #ui { position: absolute; top: 20px; font-size: 24px; z-index: 10; text-shadow: 0 0 10px #0f0; font-weight: bold; text-align: center; }
+        #counter-box { font-size: 14px; color: #888; margin-top: 5px; font-weight: normal; }
+        canvas { background: #050505; border: 2px solid #0f0; box-shadow: 0 0 30px #030; display: block; }
+        #start-screen { position: absolute; background: rgba(0,10,0,0.95); padding: 40px; border: 2px solid #0f0; text-align: center; z-index: 20; box-shadow: 0 0 20px #0f0; }
+        button { background: #0f0; color: #000; border: none; padding: 15px 35px; font-weight: bold; cursor: pointer; font-family: inherit; font-size: 18px; margin-top: 20px; }
+        button:hover { background: #fff; box-shadow: 0 0 15px #fff; }
+        .hint { color: #888; font-size: 14px; margin-top: 15px; line-height: 1.6; }
     </style>
 </head>
 <body>
 
-    <div id="ui">ENCRYPTED DATA: <span id="score">0</span> MB</div>
+    <div id="ui">
+        DATA STOLEN: <span id="score">0</span> MB
+        <div id="counter-box">
+            TOTAL ACCESSES: <img src="https://hitwebcounter.com/counter/counter.php?page=RootEscapeGame&style=0006&nbdigits=5&type=page&initCount=0" title="Free Counter" Alt="web counter" border="0" />
+        </div>
+    </div>
 
     <div id="start-screen">
-        <h1 style="margin: 0;">GRAVITY BREACH</h1>
-        <p class="mode-text">1 KLİK: Yuxarı/Aşağı Deşiyin<br>2 KLİK: Ortada Sabit Qalın</p>
+        <h1 style="margin: 0; letter-spacing: 3px;">GRAVITY BREACH</h1>
+        <div class="hint">
+            <b>1 KLİK:</b> Yuxarı / Aşağı keçid<br>
+            <b>2 KLİK (Double):</b> Ortada sabit qalmaq
+        </div>
         <button onclick="startGame()">SİSTEMƏ SIZ</button>
     </div>
 
@@ -31,41 +41,42 @@
         const scoreElement = document.getElementById('score');
         const startScreen = document.getElementById('start-screen');
 
-        canvas.width = 400; canvas.height = 600;
+        canvas.width = 400; 
+        canvas.height = 600;
 
         let score = 0, isGameRunning = false, obstacles = [], frames = 0;
         let lastClickTime = 0;
 
         const player = {
-            x: 50, y: 550, w: 25, h: 25, 
-            gravityState: "down", // "up", "down", "middle"
-            speed: 6,
+            x: 60, y: 550, w: 25, h: 25, 
+            gravityState: "down", 
             draw() {
                 ctx.fillStyle = this.gravityState === "middle" ? "#fff" : "#0f0";
-                ctx.shadowBlur = 15; ctx.shadowColor = ctx.fillStyle;
+                ctx.shadowBlur = 15; 
+                ctx.shadowColor = ctx.fillStyle;
                 ctx.fillRect(this.x, this.y, this.w, this.h);
+                ctx.shadowBlur = 0; 
             },
             update() {
                 if (!isGameRunning) return;
                 
                 let targetY;
-                if (this.gravityState === "down") targetY = canvas.height - this.h - 10;
-                else if (this.gravityState === "up") targetY = 10;
-                else targetY = canvas.height / 2 - this.h / 2;
+                if (this.gravityState === "down") targetY = canvas.height - this.h - 15;
+                else if (this.gravityState === "up") targetY = 15;
+                else targetY = (canvas.height / 2) - (this.h / 2);
 
-                // Hamar hərəkət üçün
-                this.y += (targetY - this.y) * 0.2;
+                this.y += (targetY - this.y) * 0.15;
             }
         };
 
         function createObstacle() {
             const types = ["top", "bottom", "middle"];
             const type = types[Math.floor(Math.random() * types.length)];
-            let obs = { x: canvas.width, w: 40, type: type, passed: false };
+            let obs = { x: canvas.width, w: 50, type: type, passed: false };
             
-            if (type === "top") { obs.y = 0; obs.h = 200; }
-            else if (type === "bottom") { obs.y = canvas.height - 200; obs.h = 200; }
-            else { obs.y = canvas.height / 2 - 50; obs.h = 100; }
+            if (type === "top") { obs.y = 0; obs.h = 220; }
+            else if (type === "bottom") { obs.y = canvas.height - 220; obs.h = 220; }
+            else { obs.y = (canvas.height / 2) - 60; obs.h = 120; }
             
             obstacles.push(obs);
         }
@@ -77,62 +88,73 @@
             player.update();
             player.draw();
 
-            if (frames % 100 === 0) createObstacle();
+            if (frames % 90 === 0) createObstacle();
 
             obstacles.forEach((obs, i) => {
-                obs.x -= 4;
-                ctx.fillStyle = "#f00";
+                obs.x -= 4.5; 
+                
+                ctx.fillStyle = "#f00"; 
                 ctx.fillRect(obs.x, obs.y, obs.w, obs.h);
+                
+                ctx.strokeStyle = "#ffaaaa";
+                ctx.strokeRect(obs.x, obs.y, obs.w, obs.h);
 
-                // Toqquşma
-                if (player.x < obs.x + obs.w && player.x + player.w > obs.x &&
-                    player.y < obs.y + obs.h && player.y + player.h > obs.y) {
+                if (player.x < obs.x + obs.w && 
+                    player.x + player.w > obs.x &&
+                    player.y < obs.y + obs.h && 
+                    player.y + player.h > obs.y) {
                     endGame();
                 }
 
                 if (obs.x + obs.w < player.x && !obs.passed) {
-                    score += 10; scoreElement.innerText = score;
+                    score += 10; 
+                    scoreElement.innerText = score;
                     obs.passed = true;
                 }
-                if (obs.x < -50) obstacles.splice(i, 1);
+
+                if (obs.x < -60) obstacles.splice(i, 1);
             });
 
             frames++;
             requestAnimationFrame(animate);
         }
 
-        function handleInput() {
+        function handleInput(e) {
+            if(e) e.preventDefault();
             const now = Date.now();
             const diff = now - lastClickTime;
             
-            if (diff < 250) { // Double click (2 dəfə basıldı)
+            if (diff < 250) { 
                 player.gravityState = "middle";
-            } else { // Single click
+                lastClickTime = 0; 
+            } else { 
+                lastClickTime = now;
                 setTimeout(() => {
-                    if (Date.now() - lastClickTime >= 250) {
-                        player.gravityState = player.gravityState === "down" ? "up" : "down";
+                    if (Date.now() - lastClickTime >= 200 && lastClickTime !== 0) {
+                        player.gravityState = (player.gravityState === "down" || player.gravityState === "middle") ? "up" : "down";
                     }
-                }, 255);
+                }, 210);
             }
-            lastClickTime = now;
         }
 
         function startGame() {
             startScreen.style.display = 'none';
             score = 0; scoreElement.innerText = score;
             player.y = 550; player.gravityState = "down";
-            obstacles = []; isGameRunning = true;
+            obstacles = []; frames = 0;
+            isGameRunning = true;
             animate();
         }
 
         function endGame() {
             isGameRunning = false;
             startScreen.style.display = 'block';
-            startScreen.querySelector('h1').innerText = "SYSTEM REJECTED";
+            startScreen.querySelector('h1').innerText = "CONNECTION TERMINATED";
+            startScreen.querySelector('.hint').innerHTML = "Sistem səni blokladı!<br>Oğurlanan Data: " + score + " MB";
         }
 
-        window.addEventListener('keydown', (e) => { if (e.code === 'Space') handleInput(); });
-        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleInput(); });
+        window.addEventListener('keydown', (e) => { if (e.code === 'Space') handleInput(e); });
+        canvas.addEventListener('touchstart', handleInput, {passive: false});
     </script>
 </body>
 </html>
