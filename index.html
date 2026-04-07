@@ -3,24 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RootEscape v2.0 | Cyber Breach</title>
+    <title>Gravity Breach | RootEscape</title>
     <style>
         body { margin: 0; background: #000; color: #0f0; font-family: 'Courier New', monospace; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        #game-ui { position: absolute; top: 20px; text-align: center; width: 100%; font-size: 28px; z-index: 10; font-weight: bold; }
-        canvas { background: radial-gradient(circle, #001a00 0%, #000 100%); border: 3px solid #0f0; box-shadow: 0 0 30px #030; }
-        #start-screen { position: absolute; background: rgba(0, 10, 0, 0.95); padding: 40px; border: 2px solid #0f0; text-align: center; z-index: 20; }
-        button { background: #0f0; color: #000; border: none; padding: 15px 40px; font-size: 18px; cursor: pointer; font-family: inherit; font-weight: bold; transition: 0.3s; }
-        button:hover { background: #fff; box-shadow: 0 0 15px #fff; }
+        #ui { position: absolute; top: 20px; font-size: 22px; z-index: 10; text-shadow: 0 0 10px #0f0; }
+        canvas { background: #050505; border: 2px solid #0f0; box-shadow: 0 0 20px #030; }
+        #start-screen { position: absolute; background: rgba(0,0,0,0.9); padding: 30px; border: 2px solid #0f0; text-align: center; z-index: 20; }
+        button { background: #0f0; color: #000; border: none; padding: 12px 25px; font-weight: bold; cursor: pointer; font-family: inherit; }
+        .mode-text { color: #fff; font-size: 14px; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-    <div id="game-ui">DATA BREACHED: <span id="score">0</span> GB</div>
+    <div id="ui">ENCRYPTED DATA: <span id="score">0</span> MB</div>
 
     <div id="start-screen">
-        <h1 style="color: #0f0; text-shadow: 0 0 10px #0f0;">SYSTEM ACCESS</h1>
-        <p>Firewall-lardan qaç, datanı oğurla!</p>
-        <button onclick="startGame()">HACK-I BAŞLAT</button>
+        <h1 style="margin: 0;">GRAVITY BREACH</h1>
+        <p class="mode-text">1 KLİK: Yuxarı/Aşağı Deşiyin<br>2 KLİK: Ortada Sabit Qalın</p>
+        <button onclick="startGame()">SİSTEMƏ SIZ</button>
     </div>
 
     <canvas id="gameCanvas"></canvas>
@@ -31,48 +31,43 @@
         const scoreElement = document.getElementById('score');
         const startScreen = document.getElementById('start-screen');
 
-        canvas.width = 400;
-        canvas.height = 600;
+        canvas.width = 400; canvas.height = 600;
 
-        let score = 0, isGameRunning = false, frames = 0, obstacles = [];
+        let score = 0, isGameRunning = false, obstacles = [], frames = 0;
+        let lastClickTime = 0;
 
         const player = {
-            x: 60, y: 300, w: 25, h: 25, gravity: 0.5, velocity: 0, jump: -8,
+            x: 50, y: 550, w: 25, h: 25, 
+            gravityState: "down", // "up", "down", "middle"
+            speed: 6,
             draw() {
-                ctx.fillStyle = "#0f0";
-                ctx.shadowBlur = 15; ctx.shadowColor = "#0f0";
+                ctx.fillStyle = this.gravityState === "middle" ? "#fff" : "#0f0";
+                ctx.shadowBlur = 15; ctx.shadowColor = ctx.fillStyle;
                 ctx.fillRect(this.x, this.y, this.w, this.h);
-                ctx.strokeStyle = "#fff";
-                ctx.strokeRect(this.x, this.y, this.w, this.h);
             },
             update() {
                 if (!isGameRunning) return;
-                this.velocity += this.gravity;
-                this.y += this.velocity;
-                if (this.y + this.h > canvas.height || this.y < 0) endGame();
+                
+                let targetY;
+                if (this.gravityState === "down") targetY = canvas.height - this.h - 10;
+                else if (this.gravityState === "up") targetY = 10;
+                else targetY = canvas.height / 2 - this.h / 2;
+
+                // Hamar hərəkət üçün
+                this.y += (targetY - this.y) * 0.2;
             }
         };
 
-        function startGame() {
-            startScreen.style.display = 'none';
-            score = 0; scoreElement.innerText = score;
-            player.y = 300; player.velocity = 0;
-            obstacles = []; frames = 0;
-            isGameRunning = true;
-            animate();
-        }
-
-        function endGame() {
-            isGameRunning = false;
-            startScreen.style.display = 'block';
-            startScreen.querySelector('h1').innerText = "CONNECTION LOST!";
-            startScreen.querySelector('p').innerHTML = "Oğurlanan Data: " + score + " GB";
-        }
-
         function createObstacle() {
-            let gap = 160;
-            let h = Math.random() * (canvas.height - gap - 100) + 50;
-            obstacles.push({ x: canvas.width, top: h, bottom: canvas.height - h - gap, passed: false });
+            const types = ["top", "bottom", "middle"];
+            const type = types[Math.floor(Math.random() * types.length)];
+            let obs = { x: canvas.width, w: 40, type: type, passed: false };
+            
+            if (type === "top") { obs.y = 0; obs.h = 200; }
+            else if (type === "bottom") { obs.y = canvas.height - 200; obs.h = 200; }
+            else { obs.y = canvas.height / 2 - 50; obs.h = 100; }
+            
+            obstacles.push(obs);
         }
 
         function animate() {
@@ -82,44 +77,62 @@
             player.update();
             player.draw();
 
-            if (frames % 85 === 0) createObstacle();
+            if (frames % 100 === 0) createObstacle();
 
             obstacles.forEach((obs, i) => {
-                obs.x -= 4; // Sürəti bir az artırdım
-
-                // Firewall (Maneə) Dizaynı
-                ctx.fillStyle = "#300"; // Tünd qırmızı
-                ctx.fillRect(obs.x, 0, 55, obs.top);
-                ctx.fillRect(obs.x, canvas.height - obs.bottom, 55, obs.bottom);
-                
-                // Maneənin kənarındakı "təhlükə" xətti
+                obs.x -= 4;
                 ctx.fillStyle = "#f00";
-                ctx.fillRect(obs.x + 50, 0, 5, obs.top);
-                ctx.fillRect(obs.x + 50, canvas.height - obs.bottom, 5, obs.bottom);
+                ctx.fillRect(obs.x, obs.y, obs.w, obs.h);
 
-                // TOQQOUŞMA MƏNTİQİ
-                if (player.x + player.w > obs.x && player.x < obs.x + 55 &&
-                    (player.y < obs.top || player.y + player.h > canvas.height - obs.bottom)) {
+                // Toqquşma
+                if (player.x < obs.x + obs.w && player.x + player.w > obs.x &&
+                    player.y < obs.y + obs.h && player.y + player.h > obs.y) {
                     endGame();
                 }
 
-                // XAL MƏNTİQİ (Xətasız versiya)
-                if (obs.x + 55 < player.x && !obs.passed) {
-                    score++;
+                if (obs.x + obs.w < player.x && !obs.passed) {
+                    score += 10; scoreElement.innerText = score;
                     obs.passed = true;
-                    scoreElement.innerText = score;
                 }
-
-                if (obs.x < -60) obstacles.splice(i, 1);
+                if (obs.x < -50) obstacles.splice(i, 1);
             });
 
             frames++;
             requestAnimationFrame(animate);
         }
 
-        window.addEventListener('keydown', (e) => { if (e.code === 'Space') player.velocity = player.jump; });
-        window.addEventListener('touchstart', (e) => { player.velocity = player.jump; e.preventDefault(); }, {passive: false});
+        function handleInput() {
+            const now = Date.now();
+            const diff = now - lastClickTime;
+            
+            if (diff < 250) { // Double click (2 dəfə basıldı)
+                player.gravityState = "middle";
+            } else { // Single click
+                setTimeout(() => {
+                    if (Date.now() - lastClickTime >= 250) {
+                        player.gravityState = player.gravityState === "down" ? "up" : "down";
+                    }
+                }, 255);
+            }
+            lastClickTime = now;
+        }
 
+        function startGame() {
+            startScreen.style.display = 'none';
+            score = 0; scoreElement.innerText = score;
+            player.y = 550; player.gravityState = "down";
+            obstacles = []; isGameRunning = true;
+            animate();
+        }
+
+        function endGame() {
+            isGameRunning = false;
+            startScreen.style.display = 'block';
+            startScreen.querySelector('h1').innerText = "SYSTEM REJECTED";
+        }
+
+        window.addEventListener('keydown', (e) => { if (e.code === 'Space') handleInput(); });
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleInput(); });
     </script>
 </body>
 </html>
